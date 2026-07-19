@@ -5,8 +5,12 @@ import {
   assertThrows,
 } from "@std/assert";
 import { z } from "zod";
-import { parseXml, safeParseXml, XmlCardinalityError } from "../src/mod.ts";
-import { normalizeXml } from "../src/normalize.ts";
+import {
+  normalizeXml,
+  parseXml,
+  safeParseXml,
+  XmlCardinalityError,
+} from "../src/mod.ts";
 import {
   NESTED_CHAPTERS_XML,
   SINGLE_BOOK_XML,

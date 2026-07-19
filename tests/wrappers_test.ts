@@ -1,7 +1,6 @@
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { z } from "zod";
-import { parseXml, XmlCardinalityError } from "../src/mod.ts";
-import { normalizeXml } from "../src/normalize.ts";
+import { normalizeXml, parseXml, XmlCardinalityError } from "../src/mod.ts";
 import { RECURSIVE_SECTIONS_XML } from "./fixtures/catalog.ts";
 
 Deno.test("normalizes optional arrays when present", () => {

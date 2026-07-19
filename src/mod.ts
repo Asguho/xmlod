@@ -36,6 +36,9 @@ export {
   parseXml,
   safeParseXml,
 } from "./parse.ts";
+export { normalizeXml } from "./normalize.ts";
+export { resolveCardinality } from "./schema-inspector.ts";
+export type { SchemaCardinality, SchemaShape } from "./schema-inspector.ts";
 export type { XmlodParser } from "./parse.ts";
 export {
   formatPath,

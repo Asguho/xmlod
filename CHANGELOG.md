@@ -15,6 +15,8 @@ and this project adheres to
   repeated elements are arrays or singletons.
 - `safeParseXml()` — non-throwing variant returning a discriminated result.
 - `createXmlParser()` — reusable parser with a fixed configuration.
+- `normalizeXml()` and `resolveCardinality()` — the cardinality normalization
+  and schema classification primitives, exported for advanced use.
 - Error hierarchy: `XmlodError`, `XmlSyntaxError`, `XmlCardinalityError` (with
   `path`, `expected`, and `receivedCount`), and `XmlSchemaError` (wrapping the
   underlying `ZodError` as `cause`).

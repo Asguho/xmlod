@@ -245,6 +245,22 @@ surfaces as a regular Zod validation error rather than a silent guess. If you
 need normalization there, restructure the schema so the array/singleton decision
 sits outside the ambiguous construct.
 
+### Advanced: normalization without parsing
+
+If you already have XML-parser output — or want to plug in a different XML
+parser — `normalizeXml` applies only the cardinality normalization, and
+`resolveCardinality` exposes how Xmlod classifies a schema:
+
+```ts
+import { normalizeXml, resolveCardinality } from "@your-scope/xmlod";
+
+normalizeXml({ catalog: { book: { title: "Dune" } } }, schema);
+// -> { catalog: { book: [{ title: "Dune" }] } }
+
+resolveCardinality(z.array(z.string()));
+// -> { kind: "array", element: <ZodString> }
+```
+
 ## Known limitations
 
 - **Empty elements parse as `""`, not `{}`.** `<list></list>` is an empty string
@@ -337,7 +353,9 @@ deno task test:node      # install the tarball into a temp Node project and test
 ## Publishing
 
 Xmlod is packaged for npm with `deno pack` (which produces an npm-compatible
-tarball — it does **not** publish to JSR). The release process:
+tarball — it does **not** publish to JSR). The tarball contains the compiled
+modules, generated `.d.ts` declarations, `README.md`, and `LICENSE`; the
+changelog lives in the repository (and in the JSR package). The release process:
 
 ```sh
 # 0. Replace @your-scope/xmlod with the real npm package name everywhere,
