@@ -1,0 +1,75 @@
+# Manual-only release workflow. It cannot run on push or pull_request, and it
+# refuses to publish unless all of the following hold:
+#
+#   1. A maintainer dispatches it by hand and types the exact confirmation
+#      phrase "publish-to-npm".
+#   2. The dispatched version matches the version in deno.json.
+#   3. The protected "npm-publish" environment approves the run (configure
+#      required reviewers on the environment in the repository settings).
+#   4. An NPM_TOKEN secret with publish rights exists on that environment.
+#
+# Without any one of these, nothing is published.
+name: Release to npm (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "publish-to-npm" to confirm you intend to publish'
+        required: true
+        type: string
+      version:
+        description: Version being released; must match deno.json
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write # npm provenance
+
+jobs:
+  publish:
+    if: ${{ inputs.confirm == 'publish-to-npm' }}
+    environment: npm-publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Ensure the dispatched version matches deno.json
+        env:
+          EXPECTED_VERSION: ${{ inputs.version }}
+        run: |
+          actual="$(node -p 'JSON.parse(require("fs").readFileSync("deno.json", "utf8")).version')"
+          if [ "$actual" != "$EXPECTED_VERSION" ]; then
+            echo "deno.json has version $actual but the workflow was dispatched for $EXPECTED_VERSION" >&2
+            exit 1
+          fi
+
+      - name: Verify (fmt, lint, check, test)
+        run: deno task verify
+
+      - name: Pack (dry run)
+        run: deno task pack:dry
+
+      - name: Build npm tarball
+        run: deno task pack
+
+      - name: Inspect tarball contents
+        run: tar -tzf dist/xmlod.tgz
+
+      - name: Test Node consumption of the tarball
+        run: ./scripts/node_consumer_test.sh dist/xmlod.tgz
+
+      - name: Publish to npm
+        run: npm publish ./dist/xmlod.tgz --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
