@@ -13,7 +13,7 @@
  * @module
  */
 
-import type { z } from "zod";
+import type { ZodType } from "zod";
 import { XmlCardinalityError } from "./errors.ts";
 import type { SchemaShape } from "./schema-inspector.ts";
 import { resolveCardinality } from "./schema-inspector.ts";
@@ -34,13 +34,13 @@ import { resolveCardinality } from "./schema-inspector.ts";
  * @throws {XmlCardinalityError} when element repetition contradicts the
  * schema's declared cardinality.
  */
-export function normalizeXml(value: unknown, schema: z.ZodType): unknown {
+export function normalizeXml(value: unknown, schema: ZodType): unknown {
   return normalizeValue(value, schema, []);
 }
 
 function normalizeValue(
   value: unknown,
-  schema: z.ZodType,
+  schema: ZodType,
   path: Array<string | number>,
 ): unknown {
   const cardinality = resolveCardinality(schema);
@@ -58,7 +58,7 @@ function normalizeValue(
 
 function normalizeArray(
   value: unknown,
-  element: z.ZodType,
+  element: ZodType,
   path: Array<string | number>,
 ): unknown {
   if (value === undefined || value === null) {

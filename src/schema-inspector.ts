@@ -11,10 +11,10 @@
  * @module
  */
 
-import type { z } from "zod";
+import type { ZodType } from "zod";
 
 /** The shape of a Zod object schema: field name to field schema. */
-export type SchemaShape = Readonly<Record<string, z.ZodType>>;
+export type SchemaShape = Readonly<Record<string, ZodType>>;
 
 /**
  * The structural cardinality of a Zod schema, after looking through wrapper
@@ -29,7 +29,7 @@ export type SchemaShape = Readonly<Record<string, z.ZodType>>;
  *   value through to Zod unchanged.
  */
 export type SchemaCardinality =
-  | { readonly kind: "array"; readonly element: z.ZodType }
+  | { readonly kind: "array"; readonly element: ZodType }
   | { readonly kind: "object"; readonly shape: SchemaShape }
   | { readonly kind: "singleton" }
   | { readonly kind: "opaque" };
@@ -110,10 +110,10 @@ const SINGLETON: SchemaCardinality = { kind: "singleton" };
  * `z.any()`, `z.unknown()`, standalone transforms, and unrecognized schema
  * types — is reported as `opaque`.
  */
-export function resolveCardinality(schema: z.ZodType): SchemaCardinality {
+export function resolveCardinality(schema: ZodType): SchemaCardinality {
   let current: unknown = schema;
   // Guards against pathological self-referential wrappers such as
-  // `const s: z.ZodType = z.lazy(() => s)`.
+  // `const s: ZodType = z.lazy(() => s)`.
   const seen = new Set<unknown>();
   while (!seen.has(current)) {
     seen.add(current);
@@ -138,7 +138,7 @@ export function resolveCardinality(schema: z.ZodType): SchemaCardinality {
     }
     if (def.type === "array") {
       const element = internalDefOf(def.element) !== undefined
-        ? def.element as z.ZodType
+        ? def.element as ZodType
         : undefined;
       return element === undefined ? OPAQUE : { kind: "array", element };
     }
