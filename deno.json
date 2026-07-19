@@ -19,7 +19,7 @@
     "lint": "deno lint",
     "verify": "deno task fmt:check && deno task lint && deno task check && deno task test",
     "pack:dry": "deno pack --dry-run",
-    "pack": "deno pack --output dist/xmlod.tgz",
+    "pack": "mkdir -p dist && deno pack --output dist/xmlod.tgz",
     "prepublish": "deno task verify && deno task pack:dry"
   },
   "publish": {
