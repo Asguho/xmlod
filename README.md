@@ -190,7 +190,7 @@ const safeResult = parser.safeParse(xml, schema);
 ```
 
 The `parser` option accepts any
-[`fast-xml-parser` option](https://github.com/NaturalIntelligence/fast-xml-parser/blob/master/docs/v4/2.XMLparseOptions.md),
+[`fast-xml-parser` option](https://github.com/NaturalIntelligence/fast-xml-parser/blob/master/docs/v4,%20v5/2.XMLparseOptions.md),
 merged over Xmlod's defaults:
 
 ```ts
