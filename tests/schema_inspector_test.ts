@@ -58,12 +58,71 @@ Deno.test("looks through every supported wrapper", () => {
       array.catch([]),
       array.readonly(),
       array.optional().nonoptional(),
+      z.success(array),
+      z.promise(array),
       z.lazy(() => array),
       array.refine(() => true),
     ]
   ) {
     assertEquals(resolveCardinality(wrapped).kind, "array");
   }
+});
+
+Deno.test("classifies tuples with their item and rest schemas", () => {
+  const withoutRest = resolveCardinality(z.tuple([z.string(), z.number()]));
+  assert(withoutRest.kind === "tuple");
+  assertEquals(withoutRest.items.length, 2);
+  assertEquals(withoutRest.rest, undefined);
+
+  const withRest = resolveCardinality(
+    z.tuple([z.string()], z.array(z.string())),
+  );
+  assert(withRest.kind === "tuple");
+  assertEquals(withRest.items.length, 1);
+  assert(withRest.rest !== undefined);
+  assertEquals(resolveCardinality(withRest.rest).kind, "array");
+});
+
+Deno.test("classifies records with their value schema", () => {
+  const result = resolveCardinality(
+    z.record(z.string(), z.array(z.string())),
+  );
+  assert(result.kind === "record");
+  assertEquals(resolveCardinality(result.valueType).kind, "array");
+});
+
+Deno.test("classifies a union of singletons as a singleton", () => {
+  assertEquals(
+    resolveCardinality(z.union([z.string(), z.number()])).kind,
+    "singleton",
+  );
+  assertEquals(
+    resolveCardinality(z.union([z.literal("a"), z.enum(["b", "c"])])).kind,
+    "singleton",
+  );
+});
+
+Deno.test("classifies an intersection of disjoint objects as one object", () => {
+  const result = resolveCardinality(
+    z.intersection(
+      z.object({ "@_id": z.string() }),
+      z.object({ title: z.string() }),
+    ),
+  );
+  assert(result.kind === "object");
+  assertEquals(Object.keys(result.shape).sort(), ["@_id", "title"]);
+});
+
+Deno.test("leaves intersections with overlapping keys opaque", () => {
+  assertEquals(
+    resolveCardinality(
+      z.intersection(
+        z.object({ a: z.string() }),
+        z.object({ a: z.string(), b: z.string() }),
+      ),
+    ).kind,
+    "opaque",
+  );
 });
 
 Deno.test("classifies pipes by their input side", () => {
@@ -80,11 +139,10 @@ Deno.test("classifies pipes by their input side", () => {
 Deno.test("classifies ambiguous structural schemas as opaque", () => {
   for (
     const schema of [
-      z.union([z.string(), z.number()]),
+      z.union([z.string(), z.array(z.string())]),
+      z.union([z.string(), z.object({ a: z.string() })]),
       z.discriminatedUnion("t", [z.object({ t: z.literal("a") })]),
-      z.intersection(z.object({}), z.object({})),
-      z.tuple([z.string()]),
-      z.record(z.string(), z.string()),
+      z.intersection(z.string(), z.object({})),
       z.map(z.string(), z.string()),
       z.set(z.string()),
       z.any(),
@@ -135,6 +193,27 @@ Deno.test("treats malformed defs for known types as opaque", () => {
       .kind,
     "opaque",
   );
+  assertEquals(
+    resolveCardinality(
+      asSchema({ _zod: { def: { type: "tuple", items: [1], rest: null } } }),
+    )
+      .kind,
+    "opaque",
+  );
+  assertEquals(
+    resolveCardinality(
+      asSchema({ _zod: { def: { type: "record", valueType: 1 } } }),
+    )
+      .kind,
+    "opaque",
+  );
+  assertEquals(
+    resolveCardinality(
+      asSchema({ _zod: { def: { type: "union", options: "x" } } }),
+    )
+      .kind,
+    "opaque",
+  );
 });
 
 Deno.test("guards against self-referential lazy schemas", () => {
@@ -142,6 +221,31 @@ Deno.test("guards against self-referential lazy schemas", () => {
   let cyclic: z.ZodType;
   cyclic = z.lazy(() => cyclic);
   assertEquals(resolveCardinality(cyclic).kind, "opaque");
+});
+
+Deno.test("guards against unions that cycle back through lazy branches", () => {
+  // deno-lint-ignore prefer-const
+  let cyclic: z.ZodType;
+  cyclic = z.union([z.string(), z.lazy(() => cyclic)]);
+  assertEquals(resolveCardinality(cyclic).kind, "opaque");
+});
+
+Deno.test("shared schemas across union branches do not mask each other", () => {
+  const shared = z.string();
+  assertEquals(
+    resolveCardinality(z.union([shared.optional(), shared.nullable()])).kind,
+    "singleton",
+  );
+});
+
+Deno.test("resolves lazy schemas through Zod's cached inner instance", () => {
+  const lazy = z.lazy(() => z.object({ a: z.string() }));
+  const first = resolveCardinality(lazy);
+  const second = resolveCardinality(lazy);
+  assert(first.kind === "object" && second.kind === "object");
+  // The getter constructs a fresh schema on every call; identical shapes
+  // prove the cached `_zod.innerType` instance was used instead.
+  assert(first.shape === second.shape);
 });
 
 Deno.test("resolves deeply stacked wrappers", () => {

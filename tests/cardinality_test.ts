@@ -172,10 +172,9 @@ Deno.test("does not mutate the input document", () => {
   assert(normalized !== (input as unknown));
 });
 
-Deno.test("passes union schemas through without cardinality guessing", () => {
-  // Ambiguous schema: the raw parser value reaches Zod unchanged, so a
-  // repeated element surfaces as a Zod validation error, never as a silent
-  // guess.
+Deno.test("enforces singleton cardinality for unions of singletons", () => {
+  // Every branch rejects arrays, so the union is a singleton: repetition is
+  // a descriptive cardinality error, not an opaque Zod failure.
   const schema = z.object({
     a: z.object({ b: z.union([z.string(), z.number()]) }),
   });
@@ -183,6 +182,8 @@ Deno.test("passes union schemas through without cardinality guessing", () => {
 
   const repeated = safeParseXml("<a><b>x</b><b>y</b></a>", schema);
   assert(!repeated.success);
+  assertInstanceOf(repeated.error, XmlCardinalityError);
+  assertEquals(repeated.error.path, ["a", "b"]);
 });
 
 Deno.test("passes a matching union of array and singleton through as-is", () => {
@@ -197,21 +198,64 @@ Deno.test("passes a matching union of array and singleton through as-is", () => 
   });
 });
 
-Deno.test("passes record schemas through without normalizing values", () => {
+Deno.test("normalizes record values against the record's value schema", () => {
   const schema = z.object({
     a: z.object({ b: z.record(z.string(), z.string()) }),
   });
   assertEquals(parseXml("<a><b><k>v</k></b></a>", schema), {
     a: { b: { k: "v" } },
   });
+
+  // A record of arrays wraps a single occurrence, like any array field.
+  const arrays = z.object({
+    groups: z.object({
+      group: z.record(z.string(), z.array(z.object({ n: z.string() }))),
+    }),
+  });
+  assertEquals(
+    parseXml("<groups><group><g1><n>x</n></g1></group></groups>", arrays),
+    { groups: { group: { g1: [{ n: "x" }] } } },
+  );
 });
 
-Deno.test("passes tuple schemas through without normalizing", () => {
+Deno.test("wraps and normalizes tuple items positionally", () => {
   const schema = z.object({
     a: z.object({ b: z.tuple([z.string(), z.string()]) }),
   });
   assertEquals(parseXml("<a><b>x</b><b>y</b></a>", schema), {
     a: { b: ["x", "y"] },
+  });
+
+  // A tuple always expects an array, so a single occurrence is wrapped.
+  const single = z.object({
+    a: z.object({ b: z.tuple([z.object({ v: z.array(z.string()) })]) }),
+  });
+  assertEquals(parseXml("<a><b><v>x</v></b></a>", single), {
+    a: { b: [{ v: ["x"] }] },
+  });
+});
+
+Deno.test("normalizes tuple rest items against the rest schema", () => {
+  const schema = z.object({
+    a: z.object({
+      b: z.tuple([z.object({ v: z.string() })], z.object({ v: z.string() })),
+    }),
+  });
+  assertEquals(
+    parseXml("<a><b><v>1</v></b><b><v>2</v></b><b><v>3</v></b></a>", schema),
+    { a: { b: [{ v: "1" }, { v: "2" }, { v: "3" }] } },
+  );
+});
+
+Deno.test("normalizes intersections of disjoint objects as one object", () => {
+  const schema = z.object({
+    book: z.intersection(
+      z.object({ "@_id": z.string() }),
+      z.object({ tag: z.array(z.string()) }),
+    ),
+  });
+  assertEquals(parseXml('<book id="1"><tag>a</tag></book>', schema), {
+    book: { "@_id": "1", tag: ["a"] },
   });
 });
 

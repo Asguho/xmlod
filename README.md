@@ -41,7 +41,8 @@ npm install @your-scope/xmlod zod
 ```
 
 Zod v4 is a peer of your application: you write the schemas, so you depend on
-`zod` directly.
+`zod` directly. The npm package declares `zod` as a `peerDependency`, so your
+application and Xmlod always share a single zod instance.
 
 ## Basic usage
 
@@ -211,21 +212,35 @@ Cardinality normalization understands:
   Unknown keys are passed through untouched (relevant for `z.looseObject`).
 - **Arrays** — a single XML element becomes a one-element array; every element
   is normalized against the element schema.
+- **Tuples** — a single XML element becomes a one-element array; items are
+  normalized positionally, and items beyond the declared positions against the
+  rest schema (if any).
+- **Records** — every property value is normalized against the record's value
+  schema, so `z.record(z.string(), z.array(...))` wraps single occurrences like
+  any array field.
 - **Primitives** — strings, numbers, booleans, bigints, dates, literals, enums,
   and template literals are singletons: a one-element array is unwrapped, and
   any other repetition is an `XmlCardinalityError`.
 - **Coercion** — `z.coerce.*` and `z.stringbool()` work as usual; Xmlod never
   coerces values itself.
 - **Wrappers** — `optional`, `nullable`, `default`, `prefault`, `catch`,
-  `readonly`, `nonoptional`, and `lazy` (including recursive schemas) are looked
-  through when determining cardinality. Missing, defaulted, and invalid values
-  are then handled by Zod as normal.
+  `readonly`, `nonoptional`, `success`, `promise`, and `lazy` (including
+  recursive schemas) are looked through when determining cardinality. Missing,
+  defaulted, and invalid values are then handled by Zod as normal. A cardinality
+  mismatch under a `.catch()` wrapper does not throw: the raw value is passed
+  through so Zod applies the declared fallback.
 - **Refinements** — `.refine()` / `.superRefine()` keep the underlying schema's
   cardinality and run after normalization.
 - **Transforms and pipes** — `.transform()` and `.pipe()` are classified by
   their **input** side, because that is what Zod validates against the document
   first. `z.array(...).transform((a) => a.length)` therefore still receives a
   normalized array. This is exact, not a guess.
+- **Unions of singletons** — a union whose branches are all singletons (e.g.
+  `z.union([z.string(), z.number()])`) is a singleton: repetition is a
+  descriptive `XmlCardinalityError` instead of an opaque Zod failure.
+- **Intersections of disjoint objects** — `z.object(...).and(z.object(...))`
+  with non-overlapping keys — a common way to combine attribute and element
+  groups — is normalized as one object with the merged shape.
 
 ### Ambiguous schemas are passed through
 
@@ -233,10 +248,11 @@ For schemas whose array-vs-singleton expectation cannot be determined without
 guessing, Xmlod **passes the raw parser value to Zod unchanged** (it does not
 throw an unsupported-schema error):
 
-- `z.union(...)` and `z.discriminatedUnion(...)`
-- `z.intersection(...)` / `.and(...)`
-- `z.tuple(...)`
-- `z.record(...)`, `z.map(...)`, `z.set(...)`
+- `z.union(...)` with mixed-cardinality branches, and
+  `z.discriminatedUnion(...)`
+- `z.intersection(...)` / `.and(...)` unless both sides are objects with
+  disjoint keys
+- `z.map(...)`, `z.set(...)`
 - `z.any()`, `z.unknown()`, standalone `z.transform(...)`, `z.preprocess(...)`,
   and anything Xmlod does not recognize
 
@@ -364,7 +380,7 @@ npm whoami                # confirm you are authenticated
 
 deno task verify
 deno pack --dry-run
-deno pack --output dist/xmlod.tgz
+deno task pack            # deno pack + move zod to peerDependencies
 tar -tzf dist/xmlod.tgz   # inspect what will be published
 ./scripts/node_consumer_test.sh dist/xmlod.tgz
 

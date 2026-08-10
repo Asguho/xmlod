@@ -73,6 +73,41 @@ Deno.test("normalizes arrays wrapped in catch and falls back on invalid data", (
   });
 });
 
+Deno.test("lets z.catch supply its fallback on a cardinality mismatch", () => {
+  // Normalization must not pre-empt a declared fallback: the raw repeated
+  // value is passed through so Zod fails validation and applies the catch.
+  const schema = z.object({
+    root: z.object({ a: z.string().catch("fallback") }),
+  });
+  assertEquals(parseXml("<root><a>x</a><a>y</a></root>", schema), {
+    root: { a: "fallback" },
+  });
+  assertEquals(parseXml("<root><a>x</a></root>", schema), {
+    root: { a: "x" },
+  });
+});
+
+Deno.test("lets an outer z.catch swallow a nested cardinality mismatch", () => {
+  const schema = z.object({
+    root: z.object({ a: z.string() }).catch({ a: "fallback" }),
+  });
+  assertEquals(parseXml("<root><a>x</a><a>y</a></root>", schema), {
+    root: { a: "fallback" },
+  });
+});
+
+Deno.test("normalizes success-wrapped schemas against their input side", () => {
+  const schema = z.object({
+    item: z.success(z.array(z.string())),
+  });
+  // z.success validates the inner schema's input, so a single element is
+  // still wrapped into a one-element array before Zod runs.
+  assertEquals(normalizeXml({ item: "a" }, schema), { item: ["a"] });
+  assertEquals(schema.parse(normalizeXml({ item: "a" }, schema)), {
+    item: true,
+  });
+});
+
 Deno.test("normalizes readonly arrays", () => {
   const schema = z.object({
     list: z.object({ item: z.array(z.string()).readonly() }),

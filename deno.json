@@ -1,6 +1,6 @@
 {
   "name": "@your-scope/xmlod",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "MIT",
   "exports": {
     ".": "./src/mod.ts"
@@ -19,7 +19,7 @@
     "lint": "deno lint",
     "verify": "deno task fmt:check && deno task lint && deno task check && deno task test",
     "pack:dry": "deno pack --dry-run",
-    "pack": "mkdir -p dist && deno pack --output dist/xmlod.tgz",
+    "pack": "mkdir -p dist && deno pack --output dist/xmlod.tgz && ./scripts/fix_peer_deps.sh dist/xmlod.tgz",
     "prepublish": "deno task verify && deno task pack:dry"
   },
   "publish": {
