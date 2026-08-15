@@ -12,7 +12,7 @@
  * @example
  * ```ts
  * import { z } from "zod";
- * import { parseXml } from "@your-scope/xmlod";
+ * import { parseXml } from "@asguho/xmlod";
  *
  * const schema = z.object({
  *   catalog: z.object({

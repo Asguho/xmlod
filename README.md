@@ -37,7 +37,7 @@ error instead of being silently mangled.
 ## Installation
 
 ```sh
-npm install @your-scope/xmlod zod
+npm install @asguho/xmlod zod
 ```
 
 Zod v4 is a peer of your application: you write the schemas, so you depend on
@@ -48,7 +48,7 @@ application and Xmlod always share a single zod instance.
 
 ```ts
 import { z } from "zod";
-import { parseXml } from "@your-scope/xmlod";
+import { parseXml } from "@asguho/xmlod";
 
 const schema = z.object({
   catalog: z.object({
@@ -163,7 +163,7 @@ Prefer `z.stringbool()` over `z.coerce.boolean()` for XML booleans:
 The non-throwing variant returns a discriminated result:
 
 ```ts
-import { safeParseXml } from "@your-scope/xmlod";
+import { safeParseXml } from "@asguho/xmlod";
 
 const result = safeParseXml(xml, schema);
 if (result.success) {
@@ -178,7 +178,7 @@ if (result.success) {
 Create a reusable parser when you want fixed options applied to every call:
 
 ```ts
-import { createXmlParser } from "@your-scope/xmlod";
+import { createXmlParser } from "@asguho/xmlod";
 
 const parser = createXmlParser({
   parser: {
@@ -268,7 +268,7 @@ parser — `normalizeXml` applies only the cardinality normalization, and
 `resolveCardinality` exposes how Xmlod classifies a schema:
 
 ```ts
-import { normalizeXml, resolveCardinality } from "@your-scope/xmlod";
+import { normalizeXml, resolveCardinality } from "@asguho/xmlod";
 
 normalizeXml({ catalog: { book: { title: "Dune" } } }, schema);
 // -> { catalog: { book: [{ title: "Dune" }] } }
@@ -310,7 +310,7 @@ structured issue inspection:
 
 ```ts
 import { z } from "zod";
-import { parseXml, XmlSchemaError } from "@your-scope/xmlod";
+import { parseXml, XmlSchemaError } from "@asguho/xmlod";
 
 try {
   parseXml(xml, schema);
@@ -336,7 +336,7 @@ import { parseXml } from "./src/mod.ts"; // in this repository
 or, once published to JSR (optional, see below):
 
 ```ts
-import { parseXml } from "jsr:@your-scope/xmlod";
+import { parseXml } from "jsr:@asguho/xmlod";
 ```
 
 ## Node.js usage
@@ -345,7 +345,7 @@ Install the npm package (built with `deno pack`) and import via ESM:
 
 ```ts
 import { z } from "zod";
-import { parseXml } from "@your-scope/xmlod";
+import { parseXml } from "@asguho/xmlod";
 ```
 
 The package ships generated `.d.ts` declarations; TypeScript consumers get the
@@ -374,8 +374,7 @@ modules, generated `.d.ts` declarations, `README.md`, and `LICENSE`; the
 changelog lives in the repository (and in the JSR package). The release process:
 
 ```sh
-# 0. Replace @your-scope/xmlod with the real npm package name everywhere,
-#    confirm the name is free, and make sure the git tree is clean.
+# 0. Make sure the git tree is clean (`deno pack` refuses on a dirty tree).
 npm whoami                # confirm you are authenticated
 
 deno task verify
@@ -391,8 +390,8 @@ After publishing, verify from a clean directory:
 
 ```sh
 mkdir /tmp/xmlod-check && cd /tmp/xmlod-check
-npm init -y && npm install @your-scope/xmlod zod
-node -e 'import("@your-scope/xmlod").then(m => console.log(typeof m.parseXml))'
+npm init -y && npm install @asguho/xmlod zod
+node -e 'import("@asguho/xmlod").then(m => console.log(typeof m.parseXml))'
 ```
 
 A manually triggered GitHub Actions workflow (`.github/workflows/release.yml`)
