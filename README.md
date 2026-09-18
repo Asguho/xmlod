@@ -37,22 +37,6 @@ Xmlod makes the **Zod schema the source of truth**: where the schema declares
 schema expects a singleton, repeated elements are rejected with a descriptive
 error instead of being silently mangled.
 
-## Installation
-
-Xmlod is published to both registries:
-
-- JSR — <https://jsr.io/@asguho/xmlod>
-- npm — <https://www.npmjs.com/package/@asguho/xmlod>
-
-```sh
-npm install @asguho/xmlod zod   # Node.js (npm)
-deno add jsr:@asguho/xmlod npm:zod   # Deno (JSR)
-```
-
-Zod v4 is a peer of your application: you write the schemas, so you depend on
-`zod` directly. The npm package declares `zod` as a `peerDependency`, so your
-application and Xmlod always share a single zod instance.
-
 ## Basic usage
 
 ```ts
@@ -333,6 +317,22 @@ try {
 `safeParseXml()` returns these same errors as `{ success: false, error }`
 instead of throwing. Exceptions that do not originate from Xmlod (for example, a
 `.transform()` callback that throws) are re-thrown as-is.
+
+## Installation
+
+Xmlod is published to both registries:
+
+- JSR — <https://jsr.io/@asguho/xmlod>
+- npm — <https://www.npmjs.com/package/@asguho/xmlod>
+
+```sh
+npm install @asguho/xmlod zod   # Node.js (npm)
+deno add jsr:@asguho/xmlod npm:zod   # Deno (JSR)
+```
+
+Zod v4 is a peer of your application: you write the schemas, so you depend on
+`zod` directly. The npm package declares `zod` as a `peerDependency`, so your
+application and Xmlod always share a single zod instance.
 
 ## Deno usage
 
