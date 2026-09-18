@@ -1,5 +1,8 @@
 # Xmlod
 
+[![JSR](https://jsr.io/badges/@asguho/xmlod)](https://jsr.io/@asguho/xmlod)
+[![npm](https://img.shields.io/npm/v/@asguho/xmlod?logo=npm&color=cb3837)](https://www.npmjs.com/package/@asguho/xmlod)
+
 > Schema-first XML parsing with Zod-aware cardinality.
 
 Xmlod parses XML into fully typed, validated data by letting your Zod schema —
@@ -36,8 +39,14 @@ error instead of being silently mangled.
 
 ## Installation
 
+Xmlod is published to both registries:
+
+- JSR — <https://jsr.io/@asguho/xmlod>
+- npm — <https://www.npmjs.com/package/@asguho/xmlod>
+
 ```sh
-npm install @asguho/xmlod zod
+npm install @asguho/xmlod zod   # Node.js (npm)
+deno add jsr:@asguho/xmlod npm:zod   # Deno (JSR)
 ```
 
 Zod v4 is a peer of your application: you write the schemas, so you depend on
@@ -333,7 +342,7 @@ The library is written as native TypeScript for Deno:
 import { parseXml } from "./src/mod.ts"; // in this repository
 ```
 
-or, once published to JSR (optional, see below):
+or from [JSR](https://jsr.io/@asguho/xmlod):
 
 ```ts
 import { parseXml } from "jsr:@asguho/xmlod";
@@ -398,10 +407,9 @@ A manually triggered GitHub Actions workflow (`.github/workflows/release.yml`)
 automates the same steps behind a typed confirmation phrase and a protected
 environment; ordinary pushes and pull requests never publish.
 
-### JSR (optional)
+### JSR
 
-The source is JSR-compatible. JSR publication is a separate channel from the npm
-tarball:
+JSR publication is a separate channel from the npm tarball:
 
 ```sh
 deno publish --dry-run
