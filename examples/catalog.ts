@@ -1,5 +1,5 @@
 /**
- * The canonical Xmlod example: a catalog whose `<book>` element repeats and
+ * The canonical Schema XML example: a catalog whose `<book>` element repeats and
  * whose `<owner>` element must not.
  *
  * Run with:
@@ -29,7 +29,7 @@ const schema = z.object({
 });
 
 // One <book>: most XML parsers would produce a bare object here. The schema
-// says z.array(...), so Xmlod normalizes it into a one-element array.
+// says z.array(...), so Schema XML normalizes it into a one-element array.
 const oneBook = `
 <catalog>
   <book id="1"><title>Dune</title></book>
@@ -41,7 +41,7 @@ const result = parseXml(oneBook, schema);
 console.log("book is always an array:", result.catalog.book);
 // -> [ { "@_id": 1, title: "Dune" } ]
 
-// Repeated <owner>: the schema declares a singleton, so Xmlod rejects the
+// Repeated <owner>: the schema declares a singleton, so Schema XML rejects the
 // document instead of silently discarding an owner.
 const twoOwners = `
 <catalog>

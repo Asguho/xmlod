@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0] - 2026-09-19
+
+### Changed
+
+- Complete the Schema XML rebrand across the npm and JSR packages, repository,
+  documentation, examples, and release artifacts.
+- **Breaking:** the public base error class is now `SchemaXmlError` and the
+  configured parser interface is `SchemaXmlParser`. Update imports and
+  `instanceof` checks when upgrading from 0.2.x.
+- Validate npm metadata, runtime dependencies, and exports during packaging.
+- Pin the release toolchain and check newer consumer dependencies separately.
+- Use npm trusted publishing and strengthen packed consumer type checks.
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
@@ -41,7 +54,7 @@ stays; the gaps found in its execution are fixed.
   interface; `normalizeXml` and `resolveCardinality` accept any `$ZodType`,
   including Zod Mini schemas.
 - The npm tarball declares `zod` as a `peerDependency` instead of a runtime
-  dependency, so consumers always share a single zod instance with Xmlod.
+  dependency, so consumers always share a single zod instance with Schema XML.
 
 ## [0.1.0] - 2026-07-19
 
@@ -54,9 +67,9 @@ stays; the gaps found in its execution are fixed.
 - `createXmlParser()` — reusable parser with a fixed configuration.
 - `normalizeXml()` and `resolveCardinality()` — the cardinality normalization
   and schema classification primitives, exported for advanced use.
-- Error hierarchy: `XmlodError`, `XmlSyntaxError`, `XmlCardinalityError` (with
-  `path`, `expected`, and `receivedCount`), and `XmlSchemaError` (wrapping the
-  underlying `ZodError` as `cause`).
+- Error hierarchy: `SchemaXmlError`, `XmlSyntaxError`, `XmlCardinalityError`
+  (with `path`, `expected`, and `receivedCount`), and `XmlSchemaError` (wrapping
+  the underlying `ZodError` as `cause`).
 - Cardinality normalization that looks through `optional`, `nullable`,
   `default`, `prefault`, `catch`, `readonly`, `nonoptional`, and `lazy`
   wrappers, and classifies pipes (including `.transform()`) by their input side.

@@ -1,15 +1,15 @@
 /**
- * Public option and result types for Xmlod.
+ * Public option and result types for Schema XML.
  *
  * @module
  */
 
 import type { X2jOptions } from "fast-xml-parser";
-import type { XmlodError } from "./errors.ts";
+import type { SchemaXmlError } from "./errors.ts";
 
 /**
  * Options forwarded to the underlying XML parser (`fast-xml-parser`'s
- * `XMLParser`). Any option given here is merged over Xmlod's defaults:
+ * `XMLParser`). Any option given here is merged over Schema XML's defaults:
  *
  * ```ts
  * {
@@ -21,7 +21,7 @@ import type { XmlodError } from "./errors.ts";
  * }
  * ```
  *
- * Xmlod disables the parser's primitive coercion by default so that Zod
+ * Schema XML disables the parser's primitive coercion by default so that Zod
  * (e.g. `z.coerce.number()`) remains the single source of truth for value
  * types.
  */
@@ -38,12 +38,12 @@ export interface ParseXmlOptions {
 
 /**
  * The result of {@linkcode safeParseXml}: either the parsed and validated
- * data, or the {@linkcode XmlodError} describing why parsing failed.
+ * data, or the {@linkcode SchemaXmlError} describing why parsing failed.
  */
 export type XmlSafeParseResult<T> =
   | { readonly success: true; readonly data: T; readonly error?: undefined }
   | {
     readonly success: false;
     readonly data?: undefined;
-    readonly error: XmlodError;
+    readonly error: SchemaXmlError;
   };

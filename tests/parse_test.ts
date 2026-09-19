@@ -134,14 +134,14 @@ Deno.test("safeParseXml returns success with data", () => {
   assertEquals(result.error, undefined);
 });
 
-Deno.test("safeParseXml returns failure with an XmlodError", () => {
+Deno.test("safeParseXml returns failure with an SchemaXmlError", () => {
   const result = safeParseXml("<a><b>1</b></a>", z.object({ a: z.number() }));
   assert(!result.success);
   assertInstanceOf(result.error, XmlSchemaError);
   assertEquals(result.data, undefined);
 });
 
-Deno.test("safeParseXml re-throws errors that are not Xmlod errors", () => {
+Deno.test("safeParseXml re-throws errors that are not Schema XML errors", () => {
   const boom = z.object({
     a: z.string().transform(() => {
       throw new Error("boom");

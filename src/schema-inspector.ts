@@ -32,7 +32,7 @@ export type SchemaShape = Readonly<Record<string, $ZodType>>;
  * - `singleton`: the schema expects a single primitive-like value
  *   (string, number, boolean, literal, enum, ...).
  * - `opaque`: the schema's cardinality is ambiguous (mixed union, map, set,
- *   ...) or unrecognized; Xmlod passes the raw value through to Zod
+ *   ...) or unrecognized; Schema XML passes the raw value through to Zod
  *   unchanged.
  */
 export type SchemaCardinality =

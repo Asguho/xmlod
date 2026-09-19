@@ -1,10 +1,10 @@
 /**
- * # Xmlod
+ * # Schema XML
  *
  * Schema-first XML parsing with Zod-aware cardinality.
  *
  * XML cannot express "this element repeats" in the document itself, so XML
- * parsers guess: one `<book>` becomes an object, two become an array. Xmlod
+ * parsers guess: one `<book>` becomes an object, two become an array. Schema XML
  * makes the Zod schema the source of truth — where the schema says
  * `z.array(...)`, you always get an array; where it expects a singleton,
  * repeated elements are rejected with a descriptive error.
@@ -12,7 +12,7 @@
  * @example
  * ```ts
  * import { z } from "zod";
- * import { parseXml } from "@asguho/xmlod";
+ * import { parseXml } from "@asguho/schema-xml";
  *
  * const schema = z.object({
  *   catalog: z.object({
@@ -39,11 +39,11 @@ export {
 export { normalizeXml } from "./normalize.ts";
 export { resolveCardinality } from "./schema-inspector.ts";
 export type { SchemaCardinality, SchemaShape } from "./schema-inspector.ts";
-export type { XmlodParser } from "./parse.ts";
+export type { SchemaXmlParser } from "./parse.ts";
 export {
   formatPath,
+  SchemaXmlError,
   XmlCardinalityError,
-  XmlodError,
   XmlSchemaError,
   XmlSyntaxError,
 } from "./errors.ts";

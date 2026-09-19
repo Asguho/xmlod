@@ -1,14 +1,5 @@
-# Manual-only release workflow. It cannot run on push or pull_request, and it
-# refuses to publish unless all of the following hold:
-#
-#   1. A maintainer dispatches it by hand and types the exact confirmation
-#      phrase "publish-to-npm".
-#   2. The dispatched version matches the version in deno.json.
-#   3. The protected "npm-publish" environment approves the run (configure
-#      required reviewers on the environment in the repository settings).
-#   4. An NPM_TOKEN secret with publish rights exists on that environment.
-#
-# Without any one of these, nothing is published.
+# Requires the schema-xml npm trusted publisher: Asguho/schema-xml, release.yml, npm-publish.
+# Allow direct npm publish in npm settings; no NPM_TOKEN is used.
 name: Release to npm (manual)
 
 on:
@@ -25,11 +16,15 @@ on:
 
 permissions:
   contents: read
-  id-token: write # npm provenance
+  id-token: write # npm trusted publishing and provenance
+
+concurrency:
+  group: npm-release
+  cancel-in-progress: false
 
 jobs:
   publish:
-    if: ${{ inputs.confirm == 'publish-to-npm' }}
+    if: ${{ inputs.confirm == 'publish-to-npm' && github.ref == 'refs/heads/main' }}
     environment: npm-publish
     runs-on: ubuntu-latest
     steps:
@@ -37,11 +32,11 @@ jobs:
 
       - uses: denoland/setup-deno@v2
         with:
-          deno-version: v2.x
+          deno-version: v2.9.6
 
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.18.1
           registry-url: https://registry.npmjs.org
 
       - name: Ensure the dispatched version matches deno.json
@@ -54,6 +49,9 @@ jobs:
             exit 1
           fi
 
+      - name: Install pinned npm
+        run: npm install --global npm@11.16.0
+
       - name: Verify (fmt, lint, check, test)
         run: deno task verify
 
@@ -64,12 +62,10 @@ jobs:
         run: deno task pack
 
       - name: Inspect tarball contents
-        run: tar -tzf dist/xmlod.tgz
+        run: tar -tzf dist/schema-xml.tgz
 
       - name: Test Node consumption of the tarball
-        run: ./scripts/node_consumer_test.sh dist/xmlod.tgz
+        run: ./scripts/node_consumer_test.sh dist/schema-xml.tgz
 
       - name: Publish to npm
-        run: npm publish ./dist/xmlod.tgz --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish ./dist/schema-xml.tgz --access public --provenance

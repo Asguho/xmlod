@@ -58,7 +58,7 @@ function normalizeValue(
     if (error instanceof XmlCardinalityError) {
       // A .catch() wrapper declares a fallback for invalid values. Pass the
       // raw value through so Zod fails validation and applies the fallback,
-      // instead of Xmlod pre-empting it with a thrown error.
+      // instead of Schema XML pre-empting it with a thrown error.
       return value;
     }
     throw error;

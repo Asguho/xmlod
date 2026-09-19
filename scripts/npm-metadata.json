@@ -1,0 +1,16 @@
+{
+  "name": "schema-xml",
+  "description": "Schema-first XML parsing with Zod-aware cardinality.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Asguho/schema-xml.git"
+  },
+  "homepage": "https://github.com/Asguho/schema-xml#readme",
+  "bugs": {
+    "url": "https://github.com/Asguho/schema-xml/issues"
+  },
+  "keywords": ["xml", "zod", "typescript", "validation", "parser", "schema"],
+  "engines": {
+    "node": ">=24"
+  }
+}

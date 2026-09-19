@@ -1,5 +1,5 @@
 /**
- * The parsing entry points of Xmlod: {@linkcode parseXml},
+ * The parsing entry points of Schema XML: {@linkcode parseXml},
  * {@linkcode safeParseXml}, and {@linkcode createXmlParser}.
  *
  * @module
@@ -7,7 +7,7 @@
 
 import { XMLParser } from "fast-xml-parser";
 import { z } from "zod";
-import { XmlodError, XmlSchemaError, XmlSyntaxError } from "./errors.ts";
+import { SchemaXmlError, XmlSchemaError, XmlSyntaxError } from "./errors.ts";
 import { normalizeXml } from "./normalize.ts";
 import type {
   ParseXmlOptions,
@@ -16,7 +16,7 @@ import type {
 } from "./types.ts";
 
 /**
- * The default configuration Xmlod passes to `fast-xml-parser`.
+ * The default configuration Schema XML passes to `fast-xml-parser`.
  *
  * Attributes are kept (prefixed with `@_`), values are trimmed, and the
  * parser's own primitive coercion is disabled so that Zod handles all value
@@ -102,8 +102,8 @@ export function parseXml<S extends z.ZodType>(
  *
  * Every failure mode of the library — syntax, cardinality, and schema
  * validation — is returned as `{ success: false, error }` where `error` is
- * an {@linkcode XmlodError} subclass. Errors that do not originate from
- * Xmlod (e.g. a throwing custom refinement) are re-thrown.
+ * an {@linkcode SchemaXmlError} subclass. Errors that do not originate from
+ * Schema XML (e.g. a throwing custom refinement) are re-thrown.
  */
 export function safeParseXml<S extends z.ZodType>(
   xml: string,
@@ -113,7 +113,7 @@ export function safeParseXml<S extends z.ZodType>(
   try {
     return { success: true, data: parseXml(xml, schema, options) };
   } catch (error) {
-    if (error instanceof XmlodError) {
+    if (error instanceof SchemaXmlError) {
       return { success: false, error };
     }
     throw error;
@@ -124,7 +124,7 @@ export function safeParseXml<S extends z.ZodType>(
  * A reusable XML parser with a fixed configuration, created by
  * {@linkcode createXmlParser}.
  */
-export interface XmlodParser {
+export interface SchemaXmlParser {
   /** Parses and validates like {@linkcode parseXml}, using the configured options. */
   parse<S extends z.ZodType>(xml: string, schema: S): z.output<S>;
   /** Parses and validates like {@linkcode safeParseXml}, using the configured options. */
@@ -144,7 +144,9 @@ export interface XmlodParser {
  * const safeResult = parser.safeParse(xml, schema);
  * ```
  */
-export function createXmlParser(options: ParseXmlOptions = {}): XmlodParser {
+export function createXmlParser(
+  options: ParseXmlOptions = {},
+): SchemaXmlParser {
   return {
     parse<S extends z.ZodType>(xml: string, schema: S): z.output<S> {
       return parseXml(xml, schema, options);

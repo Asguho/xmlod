@@ -1,13 +1,13 @@
-# Xmlod
+# Schema XML
 
-[![JSR](https://jsr.io/badges/@asguho/xmlod)](https://jsr.io/@asguho/xmlod)
-[![npm](https://img.shields.io/npm/v/@asguho/xmlod?logo=npm&color=cb3837)](https://www.npmjs.com/package/@asguho/xmlod)
+[![JSR](https://jsr.io/badges/@asguho/schema-xml)](https://jsr.io/@asguho/schema-xml)
+[![npm](https://img.shields.io/npm/v/schema-xml?logo=npm&color=cb3837)](https://www.npmjs.com/package/schema-xml)
 
 > Schema-first XML parsing with Zod-aware cardinality.
 
-Xmlod parses XML into fully typed, validated data by letting your Zod schema —
-not the shape of any particular document — decide whether repeated XML elements
-are arrays or singletons.
+Schema XML parses XML into fully typed, validated data by letting your Zod
+schema — not the shape of any particular document — decide whether repeated XML
+elements are arrays or singletons.
 
 ## The problem
 
@@ -32,16 +32,16 @@ parses to `{ catalog: { book: { title: "Dune" } } }`, while
 parses to `{ catalog: { book: [ ... ] } }`. Your code gets an object one day and
 an array the next.
 
-Xmlod makes the **Zod schema the source of truth**: where the schema declares
-`z.array(...)`, you always get an array (a single element is wrapped); where the
-schema expects a singleton, repeated elements are rejected with a descriptive
-error instead of being silently mangled.
+Schema XML makes the **Zod schema the source of truth**: where the schema
+declares `z.array(...)`, you always get an array (a single element is wrapped);
+where the schema expects a singleton, repeated elements are rejected with a
+descriptive error instead of being silently mangled.
 
 ## Basic usage
 
 ```ts
 import { z } from "zod";
-import { parseXml } from "@asguho/xmlod";
+import { parseXml } from "schema-xml";
 
 const schema = z.object({
   catalog: z.object({
@@ -128,8 +128,8 @@ parseXml('<note lang="en">Remember</note>', schema);
 
 ## Coercion
 
-Xmlod disables the XML parser's own primitive coercion, so every value reaches
-Zod as a string and **Zod is the single source of truth for types**:
+Schema XML disables the XML parser's own primitive coercion, so every value
+reaches Zod as a string and **Zod is the single source of truth for types**:
 
 ```ts
 const schema = z.object({
@@ -156,13 +156,13 @@ Prefer `z.stringbool()` over `z.coerce.boolean()` for XML booleans:
 The non-throwing variant returns a discriminated result:
 
 ```ts
-import { safeParseXml } from "@asguho/xmlod";
+import { safeParseXml } from "schema-xml";
 
 const result = safeParseXml(xml, schema);
 if (result.success) {
   result.data; // z.output<typeof schema>
 } else {
-  result.error; // XmlodError (syntax, cardinality, or schema failure)
+  result.error; // SchemaXmlError (syntax, cardinality, or schema failure)
 }
 ```
 
@@ -171,7 +171,7 @@ if (result.success) {
 Create a reusable parser when you want fixed options applied to every call:
 
 ```ts
-import { createXmlParser } from "@asguho/xmlod";
+import { createXmlParser } from "schema-xml";
 
 const parser = createXmlParser({
   parser: {
@@ -185,7 +185,7 @@ const safeResult = parser.safeParse(xml, schema);
 
 The `parser` option accepts any
 [`fast-xml-parser` option](https://github.com/NaturalIntelligence/fast-xml-parser/blob/master/docs/v4,%20v5/2.XMLparseOptions.md),
-merged over Xmlod's defaults:
+merged over Schema XML's defaults:
 
 ```ts
 {
@@ -214,8 +214,8 @@ Cardinality normalization understands:
 - **Primitives** — strings, numbers, booleans, bigints, dates, literals, enums,
   and template literals are singletons: a one-element array is unwrapped, and
   any other repetition is an `XmlCardinalityError`.
-- **Coercion** — `z.coerce.*` and `z.stringbool()` work as usual; Xmlod never
-  coerces values itself.
+- **Coercion** — `z.coerce.*` and `z.stringbool()` work as usual; Schema XML
+  never coerces values itself.
 - **Wrappers** — `optional`, `nullable`, `default`, `prefault`, `catch`,
   `readonly`, `nonoptional`, `success`, `promise`, and `lazy` (including
   recursive schemas) are looked through when determining cardinality. Missing,
@@ -238,8 +238,8 @@ Cardinality normalization understands:
 ### Ambiguous schemas are passed through
 
 For schemas whose array-vs-singleton expectation cannot be determined without
-guessing, Xmlod **passes the raw parser value to Zod unchanged** (it does not
-throw an unsupported-schema error):
+guessing, Schema XML **passes the raw parser value to Zod unchanged** (it does
+not throw an unsupported-schema error):
 
 - `z.union(...)` with mixed-cardinality branches, and
   `z.discriminatedUnion(...)`
@@ -247,7 +247,7 @@ throw an unsupported-schema error):
   disjoint keys
 - `z.map(...)`, `z.set(...)`
 - `z.any()`, `z.unknown()`, standalone `z.transform(...)`, `z.preprocess(...)`,
-  and anything Xmlod does not recognize
+  and anything Schema XML does not recognize
 
 Inside such a schema no normalization happens either, so a repeated element
 surfaces as a regular Zod validation error rather than a silent guess. If you
@@ -258,10 +258,10 @@ sits outside the ambiguous construct.
 
 If you already have XML-parser output — or want to plug in a different XML
 parser — `normalizeXml` applies only the cardinality normalization, and
-`resolveCardinality` exposes how Xmlod classifies a schema:
+`resolveCardinality` exposes how Schema XML classifies a schema:
 
 ```ts
-import { normalizeXml, resolveCardinality } from "@asguho/xmlod";
+import { normalizeXml, resolveCardinality } from "schema-xml";
 
 normalizeXml({ catalog: { book: { title: "Dune" } } }, schema);
 // -> { catalog: { book: [{ title: "Dune" }] } }
@@ -289,7 +289,7 @@ resolveCardinality(z.array(z.string()));
 
 ## Error handling
 
-All errors thrown by Xmlod extend `XmlodError`:
+All errors thrown by Schema XML extend `SchemaXmlError`:
 
 | Error                 | Meaning                                                                          |
 | --------------------- | -------------------------------------------------------------------------------- |
@@ -297,13 +297,13 @@ All errors thrown by Xmlod extend `XmlodError`:
 | `XmlCardinalityError` | Element repetition contradicts the schema (`path`, `expected`, `receivedCount`). |
 | `XmlSchemaError`      | The normalized document failed Zod validation.                                   |
 
-Xmlod **never throws a bare `ZodError`**: validation failures are always wrapped
-in `XmlSchemaError`, with the original `ZodError` preserved as `error.cause` for
-structured issue inspection:
+Schema XML **never throws a bare `ZodError`**: validation failures are always
+wrapped in `XmlSchemaError`, with the original `ZodError` preserved as
+`error.cause` for structured issue inspection:
 
 ```ts
 import { z } from "zod";
-import { parseXml, XmlSchemaError } from "@asguho/xmlod";
+import { parseXml, XmlSchemaError } from "schema-xml";
 
 try {
   parseXml(xml, schema);
@@ -315,24 +315,24 @@ try {
 ```
 
 `safeParseXml()` returns these same errors as `{ success: false, error }`
-instead of throwing. Exceptions that do not originate from Xmlod (for example, a
-`.transform()` callback that throws) are re-thrown as-is.
+instead of throwing. Exceptions that do not originate from Schema XML (for
+example, a `.transform()` callback that throws) are re-thrown as-is.
 
 ## Installation
 
-Xmlod is published to both registries:
+Package names by registry:
 
-- JSR — <https://jsr.io/@asguho/xmlod>
-- npm — <https://www.npmjs.com/package/@asguho/xmlod>
+- JSR — <https://jsr.io/@asguho/schema-xml>
+- npm — <https://www.npmjs.com/package/schema-xml>
 
 ```sh
-npm install @asguho/xmlod zod   # Node.js (npm)
-deno add jsr:@asguho/xmlod npm:zod   # Deno (JSR)
+npm install schema-xml zod   # Node.js (npm)
+deno add jsr:@asguho/schema-xml npm:zod   # Deno (JSR)
 ```
 
 Zod v4 is a peer of your application: you write the schemas, so you depend on
 `zod` directly. The npm package declares `zod` as a `peerDependency`, so your
-application and Xmlod always share a single zod instance.
+application and Schema XML always share a single zod instance.
 
 ## Deno usage
 
@@ -342,10 +342,10 @@ The library is written as native TypeScript for Deno:
 import { parseXml } from "./src/mod.ts"; // in this repository
 ```
 
-or from [JSR](https://jsr.io/@asguho/xmlod):
+or from [JSR](https://jsr.io/@asguho/schema-xml):
 
 ```ts
-import { parseXml } from "jsr:@asguho/xmlod";
+import { parseXml } from "jsr:@asguho/schema-xml";
 ```
 
 ## Node.js usage
@@ -354,14 +354,17 @@ Install the npm package (built with `deno pack`) and import via ESM:
 
 ```ts
 import { z } from "zod";
-import { parseXml } from "@asguho/xmlod";
+import { parseXml } from "schema-xml";
 ```
 
 The package ships generated `.d.ts` declarations; TypeScript consumers get the
-same `z.output<typeof schema>` inference as Deno consumers. The package is
-ESM-only.
+same `z.output<typeof schema>` inference as Deno consumers. The npm package is
+ESM-only and supports Node.js 24 or newer.
 
 ## Development
+
+Use Deno 2.9.6, Node.js 24.18.1, and npm 11.16.0, matching release CI. The Node
+consumer test uses TypeScript 7.0.2 and Zod 4.4.3.
 
 ```sh
 deno task check          # typecheck
@@ -371,59 +374,33 @@ deno task fmt:check      # formatting check
 deno task lint           # lint
 deno task verify         # all of the above
 deno task pack:dry       # preview the npm package contents
-deno task pack           # build dist/xmlod.tgz
+deno task pack           # build dist/schema-xml.tgz
 deno task test:node      # install the tarball into a temp Node project and test it
 ```
 
 ## Publishing
 
-Xmlod is packaged for npm with `deno pack` (which produces an npm-compatible
-tarball — it does **not** publish to JSR). The tarball contains the compiled
-modules, generated `.d.ts` declarations, `README.md`, and `LICENSE`; the
-changelog lives in the repository (and in the JSR package). The release process:
+The npm artifact is named `schema-xml`; the JSR package remains
+`@asguho/schema-xml`. Deno is required for development and packaging, not for
+Node.js consumers.
 
-```sh
-# 0. Make sure the git tree is clean (`deno pack` refuses on a dirty tree).
-npm whoami                # confirm you are authenticated
+`deno task pack` compiles the library, applies `scripts/npm-metadata.json`,
+moves Zod to peer dependencies, and validates the generated package manifest and
+exported files. `deno task test:node` installs that exact tarball in a temporary
+project and checks runtime behavior and TypeScript inference.
 
-deno task verify
-deno pack --dry-run
-deno task pack            # deno pack + move zod to peerDependencies
-tar -tzf dist/xmlod.tgz   # inspect what will be published
-./scripts/node_consumer_test.sh dist/xmlod.tgz
-
-npm publish ./dist/xmlod.tgz --access public
-```
-
-After publishing, verify from a clean directory:
-
-```sh
-mkdir /tmp/xmlod-check && cd /tmp/xmlod-check
-npm init -y && npm install @asguho/xmlod zod
-node -e 'import("@asguho/xmlod").then(m => console.log(typeof m.parseXml))'
-```
-
-A manually triggered GitHub Actions workflow (`.github/workflows/release.yml`)
-automates the same steps behind a typed confirmation phrase and a protected
-environment; ordinary pushes and pull requests never publish.
-
-### JSR
-
-JSR publication is a separate channel from the npm tarball:
-
-```sh
-deno publish --dry-run
-deno publish
-```
+See [RELEASING.md](./RELEASING.md) for pinned tool versions, trusted publishing
+setup and separate JSR releases. Pushes and pull requests only validate; the npm
+release workflow is manually triggered.
 
 ## Versioning
 
-Xmlod follows [Semantic Versioning](https://semver.org/). While the version is
-below 1.0.0, minor releases may contain breaking changes; patch releases will
+Schema XML follows [Semantic Versioning](https://semver.org/). While the version
+is below 1.0.0, minor releases may contain breaking changes; patch releases will
 not. The library inspects Zod's internal schema representation in exactly one
 module (`src/schema-inspector.ts`); if a Zod release changes its internals, the
-fix lands there and ships as a patch release. Anything Xmlod cannot recognize
-degrades to pass-through behavior rather than throwing.
+fix lands there and ships as a patch release. Anything Schema XML cannot
+recognize degrades to pass-through behavior rather than throwing.
 
 ## License
 

@@ -8,11 +8,11 @@ set -euo pipefail
 #   2. `parseXml` is importable via ESM and behaves correctly at runtime,
 #   3. TypeScript can consume the generated declaration files.
 #
-# Usage: scripts/node_consumer_test.sh [path/to/xmlod.tgz]
-# Defaults to dist/xmlod.tgz. Nothing is written inside the repository.
+# Usage: scripts/node_consumer_test.sh [path/to/schema-xml.tgz]
+# Defaults to dist/schema-xml.tgz. Nothing is written inside the repository.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TARBALL="${1:-$ROOT/dist/xmlod.tgz}"
+TARBALL="${1:-$ROOT/dist/schema-xml.tgz}"
 
 if [[ ! -f "$TARBALL" ]]; then
   echo "error: tarball not found at $TARBALL — run 'deno task pack' first" >&2
@@ -20,25 +20,38 @@ if [[ ! -f "$TARBALL" ]]; then
 fi
 TARBALL="$(cd "$(dirname "$TARBALL")" && pwd)/$(basename "$TARBALL")"
 
-PKG_NAME="$(node -p 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).name' "$ROOT/deno.json")"
-
 WORKDIR="$(mktemp -d)"
 trap 'rm -rf "$WORKDIR"' EXIT
 cd "$WORKDIR"
+
+# Read the final artifact: its npm name differs from the JSR name in deno.json.
+tar -xzf "$TARBALL" -C "$WORKDIR"
+PKG_NAME="$(node --input-type=module - <<'JS'
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+const pkg = JSON.parse(readFileSync("package/package.json", "utf8"));
+assert.equal(pkg.name, "schema-xml");
+assert.equal(typeof pkg.peerDependencies?.zod, "string");
+assert.equal(pkg.dependencies?.zod, undefined);
+assert.deepEqual(Object.keys(pkg.dependencies).sort(), ["fast-xml-parser"]);
+console.log(pkg.name);
+JS
+)"
 
 echo "==> consumer project: $WORKDIR"
 echo "==> package under test: $PKG_NAME ($TARBALL)"
 
 cat > package.json <<'JSON'
 {
-  "name": "xmlod-consumer-test",
+  "name": "schema-xml-consumer-test",
   "private": true,
   "type": "module"
 }
 JSON
 
 echo "==> npm install"
-npm install --no-audit --no-fund --loglevel=error "$TARBALL" "zod@^4.4.3" "typescript@latest" > /dev/null
+# Release checks use exact versions; the compatibility workflow overrides these.
+npm install --no-audit --no-fund --loglevel=error "$TARBALL" "zod@${SCHEMA_XML_TEST_ZOD:-4.4.3}" "typescript@${SCHEMA_XML_TEST_TYPESCRIPT:-7.0.2}" > /dev/null
 
 cat > main.mjs <<'MJS'
 import assert from "node:assert/strict";
@@ -93,7 +106,7 @@ import {
   createXmlParser,
   parseXml,
   safeParseXml,
-  type XmlodError,
+  type SchemaXmlError,
   type XmlSafeParseResult,
 } from "__PKG__";
 
@@ -110,13 +123,18 @@ const result = parseXml(
 );
 const books: Array<{ title: string }> = result.catalog.book;
 const title: string = books[0].title;
+// These must fail directly on the inferred output, even if it regresses to any.
+// @ts-expect-error A parsed title is a string, not a number.
+const invalidTitle: number = result.catalog.book[0].title;
+// @ts-expect-error The schema does not declare a missing field.
+result.catalog.book[0].missing;
 
 const safe: XmlSafeParseResult<z.output<typeof schema>> = safeParseXml(
   "<x/>",
   schema,
 );
 if (!safe.success) {
-  const err: XmlodError = safe.error;
+  const err: SchemaXmlError = safe.error;
   console.error(err.name);
 }
 
@@ -126,6 +144,14 @@ const fromParser = parser.parse(
   schema,
 );
 console.log(title, fromParser.catalog.book.length);
+// @ts-expect-error Configured parsers must retain schema output inference.
+const invalidConfiguredTitle: number = fromParser.catalog.book[0].title;
+
+const inferredSafe = safeParseXml("<catalog/>", schema);
+if (inferredSafe.success) {
+  // @ts-expect-error Safe parsing must retain schema output inference too.
+  const invalidSafeTitle: number = inferredSafe.data.catalog.book[0].title;
+}
 TS
 
 # Substitute the real package name into the consumer sources.

@@ -9,8 +9,8 @@ import {
   formatPath,
   parseXml,
   safeParseXml,
+  SchemaXmlError,
   XmlCardinalityError,
-  XmlodError,
   XmlSchemaError,
   XmlSyntaxError,
 } from "../src/mod.ts";
@@ -21,7 +21,7 @@ Deno.test("throws XmlSyntaxError for malformed XML", () => {
     () => parseXml(INVALID_XML, z.object({})),
     XmlSyntaxError,
   );
-  assertInstanceOf(error, XmlodError);
+  assertInstanceOf(error, SchemaXmlError);
   assertInstanceOf(error.cause, Error);
   assert(error.message.startsWith("Invalid XML:"));
 });
@@ -37,7 +37,7 @@ Deno.test("wraps Zod validation failures in XmlSchemaError", () => {
     () => parseXml("<a><b>not-a-number</b></a>", schema),
     XmlSchemaError,
   );
-  assertInstanceOf(error, XmlodError);
+  assertInstanceOf(error, SchemaXmlError);
   assertInstanceOf(error.cause, z.ZodError);
   assert(error.message.includes("did not match the provided schema"));
 });
@@ -93,7 +93,7 @@ Deno.test("XmlCardinalityError copies its path defensively", () => {
 });
 
 Deno.test("error classes carry distinguishing names", () => {
-  assertEquals(new XmlodError("x").name, "XmlodError");
+  assertEquals(new SchemaXmlError("x").name, "SchemaXmlError");
   assertEquals(new XmlSyntaxError("x").name, "XmlSyntaxError");
   assertEquals(new XmlSchemaError("x").name, "XmlSchemaError");
   assertEquals(

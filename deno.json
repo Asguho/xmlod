@@ -1,6 +1,6 @@
 {
-  "name": "@asguho/xmlod",
-  "version": "0.2.0",
+  "name": "@asguho/schema-xml",
+  "version": "0.3.0",
   "license": "MIT",
   "exports": {
     ".": "./src/mod.ts"
@@ -19,13 +19,14 @@
     "lint": "deno lint",
     "verify": "deno task fmt:check && deno task lint && deno task check && deno task test",
     "pack:dry": "deno pack --dry-run",
-    "pack": "mkdir -p dist && deno pack --output dist/xmlod.tgz && ./scripts/fix_peer_deps.sh dist/xmlod.tgz",
+    "pack": "./scripts/pack_npm.sh",
     "prepublish": "deno task verify && deno task pack:dry"
   },
   "publish": {
     "include": [
       "src/**/*.ts",
       "README.md",
+      "RELEASING.md",
       "LICENSE",
       "CHANGELOG.md"
     ]

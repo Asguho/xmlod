@@ -1,8 +1,8 @@
 /**
- * Error hierarchy for Xmlod.
+ * Error hierarchy for Schema XML.
  *
- * All errors thrown by Xmlod extend {@linkcode XmlodError}, so a single
- * `instanceof XmlodError` check catches every failure mode of the library.
+ * All errors thrown by Schema XML extend {@linkcode SchemaXmlError}, so a single
+ * `instanceof SchemaXmlError` check catches every failure mode of the library.
  *
  * @module
  */
@@ -34,12 +34,12 @@ export function formatPath(path: XmlPath): string {
 }
 
 /**
- * Base class for all errors thrown by Xmlod.
+ * Base class for all errors thrown by Schema XML.
  */
-export class XmlodError extends Error {
+export class SchemaXmlError extends Error {
   constructor(message: string, options?: ErrorOptions) {
     super(message, options);
-    this.name = "XmlodError";
+    this.name = "SchemaXmlError";
   }
 }
 
@@ -48,7 +48,7 @@ export class XmlodError extends Error {
  *
  * The underlying parser error is preserved as {@linkcode Error.cause}.
  */
-export class XmlSyntaxError extends XmlodError {
+export class XmlSyntaxError extends SchemaXmlError {
   constructor(message: string, options?: ErrorOptions) {
     super(message, options);
     this.name = "XmlSyntaxError";
@@ -83,7 +83,7 @@ function cardinalityMessage(details: XmlCardinalityErrorDetails): string {
  * declared by the Zod schema — for example, two sibling elements with the
  * same name where the schema expects a singleton.
  */
-export class XmlCardinalityError extends XmlodError {
+export class XmlCardinalityError extends SchemaXmlError {
   /** Path to the offending value within the parsed document. */
   readonly path: Array<string | number>;
   /** The cardinality the schema expects at {@linkcode path}. */
@@ -105,7 +105,7 @@ export class XmlCardinalityError extends XmlodError {
  *
  * The original `ZodError` is preserved as {@linkcode Error.cause}.
  */
-export class XmlSchemaError extends XmlodError {
+export class XmlSchemaError extends SchemaXmlError {
   constructor(message: string, options?: ErrorOptions) {
     super(message, options);
     this.name = "XmlSchemaError";
